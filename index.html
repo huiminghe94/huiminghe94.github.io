@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>滑动列线图 · 疾病风险评估</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        body {
+            background: linear-gradient(145deg, #f0f4fa 0%, #e6ecf5 100%);
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+        }
+        .card {
+            max-width: 880px;
+            width: 100%;
+            background: rgba(255,255,255,0.75);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border-radius: 48px;
+            padding: 2.5rem 2.2rem;
+            box-shadow: 0 30px 50px rgba(0, 20, 40, 0.25), inset 0 2px 4px rgba(255,255,255,0.6);
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            margin: 0 0 0.25rem 0;
+            color: #0b2a3e;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .subhead {
+            font-size: 1rem;
+            color: #3a5470;
+            margin-bottom: 2.2rem;
+            padding-left: 0.3rem;
+            font-weight: 400;
+            border-left: 4px solid #4f8bc9;
+            padding-left: 1rem;
+        }
+        .nomogram-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+        .factor-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.8rem 1rem;
+        }
+        .factor-label {
+            flex: 0 0 140px;
+            font-weight: 600;
+            color: #1f3b57;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .factor-label span {
+            font-weight: 400;
+            font-size: 0.9rem;
+            color: #5c6f88;
+            background: rgba(79, 139, 201, 0.12);
+            padding: 2px 10px;
+            border-radius: 30px;
+        }
+        .slider-container {
+            flex: 1;
+            min-width: 260px;
+            position: relative;
+            padding: 6px 0;
+        }
+        .risk-slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 20px;
+            background: linear-gradient(90deg, #8fc1e0 0%, #f4b45a 50%, #dc6e6e 100%);
+            -webkit-appearance: none;
+            appearance: none;
+            outline: none;
+        }
+        .risk-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 6px 12px rgba(0,20,40,0.25);
+            border: 3px solid #1e4f7a;
+            cursor: grab;
+            transition: 0.1s;
+            margin-top: -8px;
+        }
+        .risk-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.18);
+            background: #f0f9ff;
+        }
+        .risk-slider::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            border: 3px solid #1e4f7a;
+            cursor: pointer;
+        }
+        .value-badge {
+            flex: 0 0 70px;
+            text-align: right;
+            font-weight: 700;
+            font-size: 1.4rem;
+            color: #0b2a3e;
+            background: rgba(255,255,255,0.5);
+            padding: 0.25rem 0.8rem;
+            border-radius: 60px;
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: inset 0 1px 4px rgba(0,0,0,0.02);
+        }
+        .score-mini {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #3f6682;
+            display: block;
+            line-height: 1.2;
+        }
+        .scale-markers {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            font-size: 0.75rem;
+            color: #4f6072;
+            padding: 0 8px;
+        }
+        .total-risk-panel {
+            margin-top: 3rem;
+            background: linear-gradient(135deg, #ffffff 0%, #f5faff 100%);
+            border-radius: 40px;
+            padding: 1.8rem 2.2rem;
+            box-shadow: inset 0 2px 6px rgba(255,255,255,0.8), 0 10px 20px rgba(0, 25, 60, 0.15);
+            border: 1px solid rgba(255,255,255,0.7);
+        }
+        .total-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .total-label {
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: #16344d;
+        }
+        .total-number {
+            font-size: 3.8rem;
+            font-weight: 700;
+            color: #0a1f30;
+            line-height: 1;
+        }
+        .risk-meter {
+            margin: 20px 0 15px 0;
+            height: 20px;
+            background: linear-gradient(90deg, #78b5dd, #f0c15a, #cf5a5a);
+            border-radius: 40px;
+            width: 100%;
+            position: relative;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .risk-pointer {
+            width: 20px;
+            height: 32px;
+            background: white;
+            border: 4px solid #173e5f;
+            border-radius: 30px;
+            position: relative;
+            top: -6px;
+            left: 0%;
+            transform: translateX(-50%);
+            transition: left 0.15s ease;
+            box-shadow: 0 4px 10px rgba(0,35,70,0.3);
+            pointer-events: none;
+        }
+        .risk-category {
+            display: inline-block;
+            padding: 0.4rem 1.8rem;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 1.2rem;
+            background: #e0ebf5;
+            color: #15435e;
+        }
+        .footnote {
+            margin-top: 2rem;
+            font-size: 0.85rem;
+            color: #4f6881;
+            text-align: center;
+            border-top: 2px dashed rgba(79, 107, 141, 0.2);
+            padding-top: 1.5rem;
+        }
+        .footnote strong {
+            color: #173e5f;
+        }
+        .example-note {
+            background: rgba(31, 75, 120, 0.05);
+            border-radius: 30px;
+            padding: 0.6rem 1.5rem;
+            margin: 0.5rem 0 1rem 0;
+            font-size: 0.9rem;
+            color: #1f4970;
+        }
+        button {
+            background: none;
+            border: none;
+            color: #2f68a4;
+            font-weight: 500;
+            text-decoration: underline dotted;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        button:hover {
+            color: #0b2a4a;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>
+        ⚕️ 滑动列线图·风险计算器
+        <span style="font-size: 1rem; background: #173e5f; color: white; padding: 0.2rem 1rem; border-radius: 60px;">nomogram</span>
+    </h1>
+    <div class="subhead">移动下方滑块——每个维度对应不同的风险分数，总评分映射为疾病风险概率</div>
+
+    <!-- 风险因子区域 (动态生成但硬编码更清晰) -->
+    <div class="nomogram-grid" id="factors-container">
+        <!-- 年龄因子 -->
+        <div class="factor-row" data-factor="age">
+            <div class="factor-label">🧑 年龄 <span>years</span></div>
+            <div class="slider-container">
+                <input type="range" min="20" max="80" value="45" step="1" class="risk-slider" id="slider-age">
+                <div class="scale-markers">
+                    <span>20</span><span>40</span><span>60</span><span>80</span>
+                </div>
+            </div>
+            <div class="value-badge" id="age-val">45</div>
+        </div>
+        <!-- BMI因子 -->
+        <div class="factor-row" data-factor="bmi">
+            <div class="factor-label">⚖️ BMI <span>kg/m²</span></div>
+            <div class="slider-container">
+                <input type="range" min="18" max="40" value="26" step="0.5" class="risk-slider" id="slider-bmi">
+                <div class="scale-markers">
+                    <span>18</span><span>25</span><span>32</span><span>40</span>
+                </div>
+            </div>
+            <div class="value-badge" id="bmi-val">26.0</div>
+        </div>
+        <!-- 收缩压因子 -->
+        <div class="factor-row" data-factor="sbp">
+            <div class="factor-label">❤️ 收缩压 <span>mmHg</span></div>
+            <div class="slider-container">
+                <input type="range" min="90" max="180" value="125" step="1" class="risk-slider" id="slider-sbp">
+                <div class="scale-markers">
+                    <span>90</span><span>120</span><span>150</span><span>180</span>
+                </div>
+            </div>
+            <div class="value-badge" id="sbp-val">125</div>
+        </div>
+        <!-- 总胆固醇因子 -->
+        <div class="factor-row" data-factor="chol">
+            <div class="factor-label">🩸 总胆固醇 <span>mg/dL</span></div>
+            <div class="slider-container">
+                <input type="range" min="130" max="320" value="210" step="5" class="risk-slider" id="slider-chol">
+                <div class="scale-markers">
+                    <span>130</span><span>200</span><span>260</span><span>320</span>
+                </div>
+            </div>
+            <div class="value-badge" id="chol-val">210</div>
+        </div>
+        <!-- 吸烟因子 (二分/连续通过0-1模拟, 但此处用滑动让用户感受风险累积) -->
+        <div class="factor-row" data-factor="smoke">
+            <div class="factor-label">🚬 吸烟量 <span>支/天</span></div>
+            <div class="slider-container">
+                <input type="range" min="0" max="30" value="5" step="1" class="risk-slider" id="slider-smoke">
+                <div class="scale-markers">
+                    <span>0</span><span>10</span><span>20</span><span>30</span>
+                </div>
+            </div>
+            <div class="value-badge" id="smoke-val">5</div>
+        </div>
+    </div>
+
+    <!-- 每个维度的分数小提示 (动态更新) -->
+    <div class="example-note" id="score-breakdown">
+        ⚙️ 年龄得分 +9 · BMI得分 +8 · 收缩压 +6 · 胆固醇 +7 · 吸烟 +4 
+    </div>
+
+    <!-- 总风险面板 -->
+    <div class="total-risk-panel">
+        <div class="total-header">
+            <span class="total-label">📊 综合疾病风险</span>
+            <span class="total-number" id="risk-percent">24.8%</span>
+        </div>
+        <!-- 滑动条形式的可视化 -->
+        <div class="risk-meter">
+            <div class="risk-pointer" id="risk-pointer" style="left: 24.8%;"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="risk-category" id="risk-cat">低风险</span>
+            <button id="reset-default">↺ 重置典型值</button>
+        </div>
+        <div style="margin-top: 0.8rem; font-size:0.95rem; color: #2f4d6a;" id="raw-points">
+            总积分: 34 分 (基准风险 3.2%)
+        </div>
+    </div>
+
+    <div class="footnote">
+        <strong>滑动列线图模拟</strong> · 每个滑块背后对应风险分数( Points )，相加后通过 logistic 函数计算疾病概率。
+        ⚡ 拖动任意滑块，总分及风险百分比实时更新。
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ----- 获取DOM元素 -----
+        const ageSlider = document.getElementById('slider-age');
+        const bmiSlider = document.getElementById('slider-bmi');
+        const sbpSlider = document.getElementById('slider-sbp');
+        const cholSlider = document.getElementById('slider-chol');
+        const smokeSlider = document.getElementById('slider-smoke');
+
+        const ageVal = document.getElementById('age-val');
+        const bmiVal = document.getElementById('bmi-val');
+        const sbpVal = document.getElementById('sbp-val');
+        const cholVal = document.getElementById('chol-val');
+        const smokeVal = document.getElementById('smoke-val');
+
+        const riskPercentEl = document.getElementById('risk-percent');
+        const riskPointer = document.getElementById('risk-pointer');
+        const riskCat = document.getElementById('risk-cat');
+        const rawPointsEl = document.getElementById('raw-points');
+        const scoreBreakEl = document.getElementById('score-breakdown');
+
+        const resetBtn = document.getElementById('reset-default');
+
+        // ----- 辅助函数：显示滑块值 -----
+        function updateDisplay() {
+            ageVal.innerText = ageSlider.value;
+            bmiVal.innerText = parseFloat(bmiSlider.value).toFixed(1);
+            sbpVal.innerText = sbpSlider.value;
+            cholVal.innerText = cholSlider.value;
+            smokeVal.innerText = smokeSlider.value;
+
+            calculateTotalRisk();  // 每次显示更新后重新计算
+        }
+
+        // ----- 风险得分函数 (模拟列线图 points) -----
+        // 每个因子根据数值映射到 0～20 分左右，总分范围大概 0～100
+        function getAgePoints(age) {
+            // 年龄 20～80 → 0～22 分 (线性)
+            return Math.min(22, Math.max(0, (age - 20) / 60 * 22));
+        }
+
+        function getBmiPoints(bmi) {
+            // BMI 18～40 → 0～18 分 (正常18.5~24 给低分，越高越多)
+            if (bmi <= 18) return 0;
+            if (bmi >= 40) return 18;
+            if (bmi <= 24) return (bmi - 18) / 6 * 4;  // 18~24 映射 0~4分
+            // 24~30: 4~10分
+            if (bmi <= 30) return 4 + (bmi - 24) / 6 * 6;
+            // 30~40: 10~18分
+            return 10 + (bmi - 30) / 10 * 8;
+        }
+
+        function getSbpPoints(sbp) {
+            // 收缩压 90～180 → 0～16分 (正常<120低)
+            if (sbp <= 90) return 0;
+            if (sbp >= 180) return 16;
+            if (sbp <= 120) return (sbp - 90) / 30 * 2;  // 90~120 → 0~2
+            if (sbp <= 140) return 2 + (sbp - 120) / 20 * 5; // 120~140 → 2~7
+            // 140~180 → 7~16
+            return 7 + (sbp - 140) / 40 * 9;
+        }
+
+        function getCholPoints(chol) {
+            // 总胆固醇 130~320 → 0~18分
+            if (chol <= 130) return 0;
+            if (chol >= 320) return 18;
+            if (chol <= 200) return (chol - 130) / 70 * 3;   // 130~200 → 0~3
+            if (chol <= 260) return 3 + (chol - 200) / 60 * 8; // 200~260 → 3~11
+            return 11 + (chol - 260) / 60 * 7;  // 260~320 → 11~18
+        }
+
+        function getSmokePoints(cigs) {
+            // 吸烟 0~30支/天 → 0~16分 (指数感)
+            if (cigs <= 0) return 0;
+            if (cigs >= 30) return 16;
+            if (cigs <= 5) return cigs / 5 * 2;        // 0~5支 → 0~2
+            if (cigs <= 15) return 2 + (cigs - 5) / 10 * 6; // 5~15 → 2~8
+            return 8 + (cigs - 15) / 15 * 8;  // 15~30 → 8~16
+        }
+
+        // 总分 → 风险概率 (通过类logistic函数, 合理校准使30~70分对应5%~60%)
+        function computeRiskFromTotalPoints(totalPoints) {
+            // 基础概率 2% 当 0分, 95% 当 100分, 用指数增长, 中间30分大约10% , 60分大约45%
+            // 采用 logistic 形式: risk = 1 / (1 + exp( - (totalPoints - 35) / 16 )) * 0.95
+            // 且最大不超过96%，最小不低于1%
+            let raw = 1 / (1 + Math.exp(- (totalPoints - 38) / 14));  // 偏移让分布合理
+            // 映射到 2% ~ 94%
+            let risk = 2 + raw * 92;
+            return Math.min(94, Math.max(2, risk));
+        }
+
+        // ----- 主要计算与更新函数 -----
+        function calculateTotalRisk() {
+            // 获取当前数值
+            const age = parseFloat(ageSlider.value);
+            const bmi = parseFloat(bmiSlider.value);
+            const sbp = parseFloat(sbpSlider.value);
+            const chol = parseFloat(cholSlider.value);
+            const smoke = parseFloat(smokeSlider.value);
+
+            // 计算points (保留一位小数用于展示)
+            const ptsAge = getAgePoints(age);
+            const ptsBmi = getBmiPoints(bmi);
+            const ptsSbp = getSbpPoints(sbp);
+            const ptsChol = getCholPoints(chol);
+            const ptsSmoke = getSmokePoints(smoke);
+
+            const totalPoints = ptsAge + ptsBmi + ptsSbp + ptsChol + ptsSmoke;
+            const riskPercent = computeRiskFromTotalPoints(totalPoints);
+
+            // 更新总百分比显示 (四舍五入一位小数)
+            riskPercentEl.innerText = riskPercent.toFixed(1) + '%';
+            // 指针位置 left (但需要限制在0%～100%之间)
+            let leftPos = Math.min(100, Math.max(0, riskPercent));
+            riskPointer.style.left = leftPos + '%';
+
+            // 风险分类
+            if (riskPercent < 15) riskCat.innerText = '🟢 低风险';
+            else if (riskPercent < 30) riskCat.innerText = '🟡 中低风险';
+            else if (riskPercent < 45) riskCat.innerText = '🟠 中等风险';
+            else if (riskPercent < 65) riskCat.innerText = '🔴 高风险';
+            else riskCat.innerText = '💀 极高风险';
+
+            // 显示积分明细
+            rawPointsEl.innerText = `总积分: ${totalPoints.toFixed(1)} 分 (基准风险 3.2%)`;
+
+            // 更新分数小提示
+            scoreBreakEl.innerHTML = `⚙️ 年龄得分 ${ptsAge.toFixed(0)} · BMI得分 ${ptsBmi.toFixed(0)} · 收缩压 ${ptsSbp.toFixed(0)} · 胆固醇 ${ptsChol.toFixed(0)} · 吸烟 ${ptsSmoke.toFixed(0)}`;
+        }
+
+        // ----- 绑定事件 -----
+        const sliders = [ageSlider, bmiSlider, sbpSlider, cholSlider, smokeSlider];
+        sliders.forEach(s => s.addEventListener('input', updateDisplay));
+
+        // 重置为临床典型/正常偏高的值 (非完全健康，以展示风险)
+        function resetToDefault() {
+            ageSlider.value = 48;
+            bmiSlider.value = 26.5;
+            sbpSlider.value = 132;
+            cholSlider.value = 215;
+            smokeSlider.value = 4;
+
+            updateDisplay();
+        }
+
+        resetBtn.addEventListener('click', resetToDefault);
+
+        // 页面加载立即计算显示
+        window.addEventListener('load', () => {
+            updateDisplay();
+        });
+
+        // 额外处理step显示格式，确保bmi显示一位
+        bmiSlider.addEventListener('input', function() {
+            bmiVal.innerText = parseFloat(bmiSlider.value).toFixed(1);
+        });
+        // 但updateDisplay会重新覆盖，也可以用但保持一致，不需要额外
+        // 为了美观，直接使用updateDisplay统一处理
+
+        // 首次调用
+        updateDisplay();
+    })();
+</script>
+
+<!-- 让滑块在移动端略微适配 -->
+<style>
+    @media (max-width: 600px) {
+        .card { padding: 1.8rem; }
+        .factor-label { flex-basis: 100%; margin-bottom: -0.2rem; }
+        .value-badge { flex-basis: 50px; text-align: center; }
+        .total-number { font-size: 2.8rem; }
+    }
+</style>
+</body>
+</html>
